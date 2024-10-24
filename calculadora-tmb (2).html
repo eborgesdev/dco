@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Calorias</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .result {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            display: none;
+        }
+
+        .result h2 {
+            color: #333;
+            margin-top: 0;
+        }
+
+        .error {
+            color: red;
+            display: none;
+            margin-top: 10px;
+        }
+
+        .success {
+            color: green;
+            display: none;
+            margin-top: 10px;
+            text-align: center;
+            padding: 10px;
+            background-color: #e8f5e9;
+            border-radius: 4px;
+        }
+
+        #emailForm {
+            display: none;
+            margin-top: 20px;
+        }
+
+        /* Campo oculto para o FormSubmit */
+        ._hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Calculadora de Calorias</h1>
+        <form id="calculadoraForm" action="https://formsubmit.co/eborgescb@gmail.com" method="POST">
+            <!-- Configurações do FormSubmit -->
+            <input type="hidden" name="_template" value="table">
+            <input type="hidden" name="_subject" value="Resultados da Calculadora de Calorias">
+            <input type="hidden" name="_next" value="https://seusite.com/obrigado.html">
+            <input type="hidden" name="_captcha" value="false">
+
+            <div class="form-group">
+                <label for="genero">Gênero:</label>
+                <select id="genero" name="genero" required>
+                    <option value="masculino">Masculino</option>
+                    <option value="feminino">Feminino</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="idade">Idade:</label>
+                <input type="number" id="idade" name="idade" required min="15" max="80">
+            </div>
+            <div class="form-group">
+                <label for="peso">Peso (kg):</label>
+                <input type="number" id="peso" name="peso" required step="0.1" min="40" max="200">
+            </div>
+            <div class="form-group">
+                <label for="altura">Altura (cm):</label>
+                <input type="number" id="altura" name="altura" required min="140" max="220">
+            </div>
+            <div class="form-group">
+                <label for="atividade">Nível de Atividade:</label>
+                <select id="atividade" name="nivel_atividade" required>
+                    <option value="1.2">Sedentário</option>
+                    <option value="1.375">Levemente ativo</option>
+                    <option value="1.55">Moderadamente ativo</option>
+                    <option value="1.725">Muito ativo</option>
+                    <option value="1.9">Extremamente ativo</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="objetivo">Objetivo:</label>
+                <select id="objetivo" name="objetivo" required>
+                    <option value="perder">Perder peso</option>
+                    <option value="manter">Manter peso</option>
+                    <option value="ganhar">Ganhar peso</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="email">Seu E-mail:</label>
+                <input type="email" id="email" name="email" required placeholder="exemplo@email.com">
+            </div>
+
+            <!-- Campos ocultos para resultados -->
+            <input type="hidden" id="tmb_resultado" name="tmb_resultado">
+            <input type="hidden" id="gasto_total_resultado" name="gasto_total_resultado">
+            <input type="hidden" id="calorias_objetivo_resultado" name="calorias_objetivo_resultado">
+            <input type="hidden" id="recomendacao_resultado" name="recomendacao_resultado">
+
+            <button type="submit">Calcular e Enviar Resultado</button>
+        </form>
+        <div id="error" class="error">
+            Por favor, preencha todos os campos corretamente.
+        </div>
+        <div id="success" class="success">
+            Cálculo realizado com sucesso! Os resultados foram enviados para seu email.
+        </div>
+        <div id="resultado" class="result">
+            <h2>Seus Resultados:</h2>
+            <p><strong>Taxa Metabólica Basal (TMB):</strong> <span id="tmb"></span> calorias/dia</p>
+            <p><strong>Gasto Calórico Total:</strong> <span id="gastoTotal"></span> calorias/dia</p>
+            <p><strong>Calorias para seu objetivo:</strong> <span id="caloriasObjetivo"></span> calorias/dia</p>
+            <div id="recomendacoes"></div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('calculadoraForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Obter valores do formulário
+            const genero = document.getElementById('genero').value;
+            const idade = parseInt(document.getElementById('idade').value);
+            const peso = parseFloat(document.getElementById('peso').value);
+            const altura = parseInt(document.getElementById('altura').value);
+            const nivelAtividade = parseFloat(document.getElementById('atividade').value);
+            const objetivo = document.getElementById('objetivo').value;
+
+            // Validar inputs
+            if (!idade || !peso || !altura || idade < 15 || idade > 80 || peso < 40 || peso > 200 || altura < 140 || altura > 220) {
+                document.getElementById('error').style.display = 'block';
+                document.getElementById('resultado').style.display = 'none';
+                return;
+            }
+
+            // Calcular TMB usando a fórmula de Harris-Benedict
+            let tmb;
+            if (genero === 'masculino') {
+                tmb = 88.362 + (13.397 * peso) + (4.799 * altura) - (5.677 * idade);
+            } else {
+                tmb = 447.593 + (9.247 * peso) + (3.098 * altura) - (4.330 * idade);
+            }
+
+            // Calcular gasto calórico total
+            const gastoTotal = tmb * nivelAtividade;
+
+            // Calcular calorias baseadas no objetivo
+            let caloriasObjetivo;
+            let recomendacao = '';
+            
+            switch(objetivo) {
+                case 'perder':
+                    caloriasObjetivo = gastoTotal - 500;
+                    recomendacao = 'Para perder peso de forma saudável, criamos um déficit de 500 calorias por dia, o que pode resultar em perda de aproximadamente 0,5kg por semana.';
+                    break;
+                case 'manter':
+                    caloriasObjetivo = gastoTotal;
+                    recomendacao = 'Para manter seu peso atual, mantenha este consumo calórico e mantenha-se ativo.';
+                    break;
+                case 'ganhar':
+                    caloriasObjetivo = gastoTotal + 500;
+                    recomendacao = 'Para ganhar peso de forma saudável, criamos um superávit de 500 calorias por dia, o que pode resultar em ganho de aproximadamente 0,5kg por semana.';
+                    break;
+            }
+
+            // Preencher campos ocultos com os resultados
+            document.getElementById('tmb_resultado').value = Math.round(tmb);
+            document.getElementById('gasto_total_resultado').value = Math.round(gastoTotal);
+            document.getElementById('calorias_objetivo_resultado').value = Math.round(caloriasObjetivo);
+            document.getElementById('recomendacao_resultado').value = recomendacao;
+
+            // Exibir resultados na página
+            document.getElementById('tmb').textContent = Math.round(tmb);
+            document.getElementById('gastoTotal').textContent = Math.round(gastoTotal);
+            document.getElementById('caloriasObjetivo').textContent = Math.round(caloriasObjetivo);
+            document.getElementById('recomendacoes').innerHTML = `<p style="margin-top: 20px"><strong>Recomendação:</strong> ${recomendacao}</p>`;
+            
+            document.getElementById('error').style.display = 'none';
+            document.getElementById('resultado').style.display = 'block';
+
+            // Enviar o formulário
+            this.submit();
+        });
+    </script>
+</body>
+</html>
